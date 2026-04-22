@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SiteDash Pro">
+<meta name="theme-color" content="#0a0a0f">
+<title>SiteDash Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: rgba(255,255,255,0.07);
+    --accent: #7c6aff;
+    --accent2: #ff6b6b;
+    --accent3: #00d4aa;
+    --accent4: #ffb347;
+    --text: #f0f0f8;
+    --text2: #8888aa;
+    --text3: #555570;
+    --green: #00d4aa;
+    --red: #ff6b6b;
+    --yellow: #ffb347;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'Cabinet Grotesk', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --nav-h: 72px;
+    --safe-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  .light {
+    --bg: #f4f4f8; --surface: #ffffff; --surface2: #ebebf3;
+    --border: rgba(0,0,0,0.08); --text: #0a0a1a; --text2: #555580; --text3: #aaaacc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; }
+  #app { display: flex; flex-direction: column; height: 100vh; height: -webkit-fill-available; }
+  #content { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px); }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 52px 20px 16px; background: var(--bg); position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+  .topbar-logo { font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .topbar-logo span { color: var(--accent); }
+  .topbar-sub { font-size: 11px; color: var(--text3); font-family: var(--font-mono); letter-spacing: 0.5px; margin-top: 2px; }
+  .topbar-actions { display: flex; gap: 10px; }
+  .icon-btn { width: 36px; height: 36px; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: all 0.2s; }
+  .icon-btn:active { transform: scale(0.92); }
+
+  .site-selector { display: flex; gap: 8px; padding: 14px 20px; overflow-x: auto; scrollbar-width: none; }
+  .site-selector::-webkit-scrollbar { display: none; }
+  .site-pill { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); transition: all 0.2s; white-space: nowrap; font-family: var(--font-mono); }
+  .site-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .site-pill:active { transform: scale(0.95); }
+
+  .section { display: none; padding: 0 16px; animation: fadeUp 0.3s ease; }
+  .section.active { display: block; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .card-title { font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: 0.3px; color: var(--text2); text-transform: uppercase; }
+  .card-badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-family: var(--font-mono); font-weight: 500; }
+  .badge-green { background: rgba(0,212,170,0.15); color: var(--green); }
+  .badge-red { background: rgba(255,107,107,0.15); color: var(--red); }
+  .badge-yellow { background: rgba(255,179,71,0.15); color: var(--yellow); }
+  .badge-purple { background: rgba(124,106,255,0.15); color: var(--accent); }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 12px; }
+  .stat-label { font-size: 10px; color: var(--text3); font-family: var(--font-mono); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .stat-delta { font-size: 10px; margin-top: 4px; font-family: var(--font-mono); }
+  .delta-up { color: var(--green); } .delta-down { color: var(--red); }
+
+  .mini-chart { height: 44px; display: flex; align-items: flex-end; gap: 3px; margin-top: 10px; }
+  .bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--accent); opacity: 0.4; }
+  .bar.peak { opacity: 1; } .bar.accent3 { background: var(--accent3); }
+
+  .revenue-big { text-align: center; padding: 20px; }
+  .revenue-amount { font-family: var(--font-display); font-size: 44px; font-weight: 800; letter-spacing: -2px; }
+  .revenue-amount .cents { font-size: 24px; vertical-align: top; margin-top: 8px; display: inline-block; }
+  .revenue-label { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+  .revenue-sites { display: flex; gap: 8px; margin-top: 16px; }
+  .revenue-site-pill { flex: 1; background: var(--surface2); border-radius: 10px; padding: 10px 8px; text-align: center; }
+  .revenue-site-name { font-size: 9px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; margin-bottom: 4px; }
+  .revenue-site-val { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+
+  .url-table { width: 100%; }
+  .url-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+  .url-row:last-child { border-bottom: none; }
+  .url-rank { font-family: var(--font-mono); font-size: 11px; color: var(--text3); width: 18px; flex-shrink: 0; }
+  .url-info { flex: 1; min-width: 0; }
+  .url-path { font-size: 12px; font-family: var(--font-mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .url-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .url-value { font-family: var(--font-display); font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .url-bar-wrap { width: 60px; flex-shrink: 0; }
+  .url-bar-bg { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .url-bar-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--nav-h) + var(--safe-bottom)); background: var(--surface); border-top: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-around; padding-top: 10px; z-index: 100; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 6px 10px; border-radius: 12px; transition: all 0.2s; min-width: 52px; }
+  .nav-item:active { transform: scale(0.9); }
+  .nav-icon { font-size: 20px; transition: all 0.2s; }
+  .nav-label { font-size: 9px; font-family: var(--font-mono); color: var(--text3); transition: all 0.2s; letter-spacing: 0.3px; text-transform: uppercase; }
+  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px var(--accent)); }
+  .nav-item.active .nav-label { color: var(--accent); }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); opacity: 0; transition: opacity 0.2s; }
+  .nav-item.active .nav-dot { opacity: 1; }
+
+  .section-title { font-family: var(--font-display); font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; padding: 8px 0 4px; }
+  .section-sub { font-size: 12px; color: var(--text3); font-family: var(--font-mono); margin-bottom: 16px; }
+
+  .tab-bar { display: flex; gap: 4px; background: var(--surface2); border-radius: 12px; padding: 4px; margin-bottom: 14px; }
+  .tab { flex: 1; text-align: center; padding: 8px 4px; border-radius: 9px; font-size: 11px; font-family: var(--font-mono); color: var(--text3); cursor: pointer; transition: all 0.2s; }
+  .tab.active { background: var(--surface); color: var(--text); font-weight: 500; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-info { flex: 1; }
+  .toggle-label { font-size: 14px; font-weight: 500; }
+  .toggle-desc { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--font-mono); }
+  .toggle { width: 44px; height: 26px; border-radius: 13px; background: var(--surface2); border: 1px solid var(--border); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle-knob { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: left 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .toggle.on .toggle-knob { left: 20px; }
+
+  .input-group { margin-bottom: 12px; }
+  .input-label { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .input-field { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-size: 14px; font-family: var(--font-body); outline: none; transition: border-color 0.2s; }
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--text3); }
+  textarea.input-field { min-height: 90px; resize: vertical; }
+
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; border: none; transition: all 0.2s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-green { background: var(--green); color: #0a1a14; }
+  .btn-sm { padding: 9px 14px; font-size: 12px; width: auto; }
+
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 5px; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+  .seo-score-ring { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+  .seo-score-ring svg { transform: rotate(-90deg); }
+  .seo-score-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .seo-score-num { font-family: var(--font-display); font-size: 20px; font-weight: 800; }
+  .seo-score-label { font-size: 8px; color: var(--text3); font-family: var(--font-mono); }
+  .seo-checks { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .seo-check { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+
+  .link-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .link-row:last-child { border-bottom: none; }
+  .link-strength { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; font-family: var(--font-mono); flex-shrink: 0; }
+  .link-info { flex: 1; min-width: 0; }
+  .link-path { font-size: 12px; font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .link-clicks { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  .email-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .email-row:last-child { border-bottom: none; }
+  .email-thumb { width: 40px; height: 40px; border-radius: 8px; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .email-info { flex: 1; min-width: 0; }
+  .email-subject { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .email-meta { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: var(--font-mono); }
+  .email-stat { text-align: right; flex-shrink: 0; }
+  .email-rate { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+  .email-rate-label { font-size: 9px; color: var(--text3); font-family: var(--font-mono); }
+
+  .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quiz-card { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; border: 1px solid var(--border); }
+  .quiz-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .quiz-stat-row { display: flex; justify-content: space-between; margin-top: 6px; }
+  .quiz-stat-label { font-size: 9px; color: var(--text3); font-family: var(--font-mono); }
+  .quiz-stat-val { font-size: 12px; font-weight: 700; font-family: var(--font-display); }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
+  .aff-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .aff-row:last-child { border-bottom: none; }
+  .aff-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .aff-info { flex: 1; min-width: 0; }
+  .aff-name { font-size: 13px; font-weight: 500; }
+  .aff-url { font-size: 10px; color: var(--text3); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .aff-clicks { font-family: var(--font-display); font-size: 16px; font-weight: 700; flex-shrink: 0; }
+
+  .ai-response { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; margin-top: 12px; font-size: 13px; line-height: 1.6; color: var(--text); min-height: 80px; border: 1px solid var(--border); }
+  .ai-thinking { display: flex; gap: 4px; align-items: center; justify-content: center; height: 60px; }
+  .ai-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: bounce 1s infinite; }
+  .ai-dot:nth-child(2) { animation-delay: 0.15s; } .ai-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+  .settings-section { margin-bottom: 20px; }
+  .settings-header { font-size: 11px; color: var(--text3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 1px; padding: 0 4px 8px; }
+  .settings-item { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: var(--surface); border-radius: var(--radius-sm); margin-bottom: 6px; border: 1px solid var(--border); cursor: pointer; }
+  .settings-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+  .settings-info { flex: 1; }
+  .settings-label { font-size: 14px; font-weight: 500; }
+  .settings-value { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 2px; }
+  .settings-arrow { color: var(--text3); font-size: 14px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: flex-end; backdrop-filter: blur(4px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 24px 24px 0 0; width: 100%; padding: 20px 20px calc(20px + var(--safe-bottom)); max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 20px; }
+  .modal-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+
+  .widget-type-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .widget-type { background: var(--surface2); border-radius: 10px; padding: 12px 8px; text-align: center; border: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
+  .widget-type.selected { border-color: var(--accent); background: rgba(124,106,255,0.1); }
+  .widget-type-icon { font-size: 24px; margin-bottom: 4px; }
+  .widget-type-label { font-size: 10px; font-family: var(--font-mono); color: var(--text3); }
+
+  .formula-live { background: linear-gradient(135deg, rgba(0,212,170,0.1), rgba(124,106,255,0.1)); border: 1px solid rgba(0,212,170,0.2); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; }
+  .formula-box { font-family: var(--font-mono); font-size: 12px; line-height: 1.8; color: var(--accent3); }
+  .formula-var { color: var(--accent); } .formula-op { color: var(--text3); }
+
+  .time-pills { display: flex; gap: 6px; margin-bottom: 14px; }
+  .time-pill { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-family: var(--font-mono); cursor: pointer; background: var(--surface2); color: var(--text3); border: 1px solid var(--border); transition: all 0.2s; }
+  .time-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .imp-chart { display: flex; gap: 2px; align-items: flex-end; height: 60px; margin: 10px 0; }
+  .imp-bar { flex: 1; border-radius: 2px 2px 0 0; }
+
+  .api-status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: var(--font-mono); }
+  .api-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .api-dot.connected { background: var(--green); } .api-dot.disconnected { background: var(--red); }
+
+  /* Install banner */
+  .install-banner { background: linear-gradient(135deg, rgba(124,106,255,0.2), rgba(0,212,170,0.15)); border: 1px solid rgba(124,106,255,0.3); border-radius: var(--radius-sm); padding: 14px 16px; margin: 12px 16px 0; display: flex; align-items: center; gap: 12px; }
+  .install-banner-text { flex: 1; font-size: 12px; line-height: 1.5; color: var(--text2); }
+  .install-banner-text strong { color: var(--text); display: block; margin-bottom: 2px; font-size: 13px; }
+  .install-btn { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: var(--font-body); }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo">Site<span>Dash</span> Pro</div>
+      <div class="topbar-sub"><span class="live-dot"></span>live · wed 22 apr</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="icon-btn" onclick="toggleTheme()" id="theme-btn">🌙</div>
+      <div class="icon-btn" onclick="openSection('settings')">⚙️</div>
+    </div>
+  </div>
+
+  <!-- INSTALL BANNER -->
+  <div class="install-banner" id="install-banner">
+    <div style="font-size:28px">📲</div>
+    <div class="install-banner-text">
+      <strong>Add to Home Screen</strong>
+      In Safari: tap Share → "Add to Home Screen"
+    </div>
+    <button class="install-btn" onclick="document.getElementById('install-banner').style.display='none'">Got it</button>
+  </div>
+
+  <div id="content">
+
+    <!-- ===== OVERVIEW ===== -->
+    <div class="section active" id="sec-overview">
+      <div class="site-selector">
+        <div class="site-pill active" onclick="selectSite(this)">All Sites</div>
+        <div class="site-pill" onclick="selectSite(this)">🌿 RecipeBloom</div>
+        <div class="site-pill" onclick="selectSite(this)">🏡 HomeCraft</div>
+        <div class="site-pill" onclick="selectSite(this)">✈️ WanderGuide</div>
+        <div class="site-pill" onclick="openModal('site-modal')">+ Add Site</div>
+      </div>
+
+      <div style="padding:0 4px">
+        <div class="time-pills">
+          <div class="time-pill" onclick="selectTime(this)">Today</div>
+          <div class="time-pill active" onclick="selectTime(this)">7d</div>
+          <div class="time-pill" onclick="selectTime(this)">30d</div>
+          <div class="time-pill" onclick="selectTime(this)">90d</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">💰 Live Revenue</span>
+          <span class="card-badge badge-green"><span class="live-dot" style="width:5px;height:5px;margin-right:3px;"></span>Real-time est.</span>
+        </div>
+        <div class="revenue-big">
+          <div class="revenue-amount">$<span id="rev-dollars">847</span><span class="cents">.<span id="rev-cents">23</span></span></div>
+          <div class="revenue-label">Estimated today · auto-updating</div>
+        </div>
+        <div class="revenue-sites">
+          <div class="revenue-site-pill"><div class="revenue-site-name">RecipeBloom</div><div class="revenue-site-val" style="color:var(--green)">$412</div></div>
+          <div class="revenue-site-pill"><div class="revenue-site-name">HomeCraft</div><div class="revenue-site-val" style="color:var(--accent)">$238</div></div>
+          <div class="revenue-site-pill"><div class="revenue-site-name">WanderGuide</div><div class="revenue-site-val" style="color:var(--accent2)">$197</div></div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="formula-live">
+            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:6px;">REVENUE FORMULA</div>
+            <div class="formula-box">Est. Rev = <span class="formula-var">Sessions</span> <span class="formula-op">×</span> <span class="formula-var">RPM</span> <span class="formula-op">+</span> (<span class="formula-var">Impressions</span> <span class="formula-op">×</span> <span class="formula-var">CPM</span> <span class="formula-op">÷ 1000</span>) <span class="formula-op">×</span> <span class="formula-var">fillRate</span></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);font-family:var(--font-mono);">
+            <span>RPM: <strong style="color:var(--text)">$18.40</strong></span>
+            <span>CPM: <strong style="color:var(--text)">$4.20</strong></span>
+            <span>Fill: <strong style="color:var(--text)">87%</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Page Views</div><div class="stat-value">46.2k</div><div class="stat-delta delta-up">↑ 12.4%</div><div class="mini-chart"><div class="bar" style="height:40%"></div><div class="bar" style="height:55%"></div><div class="bar" style="height:48%"></div><div class="bar" style="height:70%"></div><div class="bar" style="height:62%"></div><div class="bar" style="height:85%"></div><div class="bar peak" style="height:100%"></div></div></div>
+        <div class="stat-card"><div class="stat-label">Sessions</div><div class="stat-value">31.8k</div><div class="stat-delta delta-up">↑ 8.7%</div><div class="mini-chart"><div class="bar accent3" style="height:50%"></div><div class="bar accent3" style="height:60%"></div><div class="bar accent3" style="height:45%"></div><div class="bar accent3" style="height:72%"></div><div class="bar accent3" style="height:65%"></div><div class="bar accent3" style="height:80%"></div><div class="bar accent3 peak" style="height:95%"></div></div></div>
+        <div class="stat-card"><div class="stat-label">Avg Dwell Time</div><div class="stat-value">4:32</div><div class="stat-delta delta-up">↑ 0:18</div></div>
+        <div class="stat-card"><div class="stat-label">Unique URLs</div><div class="stat-value">284</div><div class="stat-delta delta-down">↓ 3 deleted</div></div>
+        <div class="stat-card"><div class="stat-label">PV / Session</div><div class="stat-value">1.45</div><div class="stat-delta delta-up">↑ 0.08</div></div>
+        <div class="stat-card"><div class="stat-label">Ad Impressions</div><div class="stat-value">128k</div><div class="stat-delta delta-up">↑ 9.2%</div></div>
+        <div class="stat-card"><div class="stat-label">Impr / Page</div><div class="stat-value">2.77</div><div class="stat-delta delta-up">↑ 0.12</div></div>
+        <div class="stat-card"><div class="stat-label">Affiliate Clicks</div><div class="stat-value">1,204</div><div class="stat-delta delta-up">↑ 22.1%</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">🔗 Top URLs Today</span><span class="card-badge badge-purple">by views</span></div>
+        <div class="url-table">
+          <div class="url-row"><div class="url-rank">1</div><div class="url-info"><div class="url-path">/best-pasta-recipes</div><div class="url-meta">RecipeBloom · $84.20 est.</div></div><div class="url-value">4.2k</div><div class="url-bar-wrap"><div class="url-bar-bg"><div class="url-bar-fill" style="width:100%;background:var(--green)"></div></div></div></div>
+          <div class="url-row"><div class="url-rank">2</div><div class="url-info"><div class="url-path">/kitchen-renovation-guide</div><div class="url-meta">HomeCraft · $61.10 est.</div></div><div class="url-value">3.0k</div><div class="url-bar-wrap"><div class="url-bar-bg"><div class="url-bar-fill" style="width:71%;background:var(--accent)"></div></div></div></div>
+          <div class="url-row"><div class="url-rank">3</div><div class="url-info"><div class="url-path">/europe-budget-travel</div><div class="url-meta">WanderGuide · $48.90 est.</div></div><div class="url-value">2.4k</div><div class="url-bar-wrap"><div class="url-bar-bg"><div class="url-bar-fill" style="width:57%;background:var(--accent2)"></div></div></div></div>
+          <div class="url-row"><div class="url-rank">4</div><div class="url-info"><div class="url-path">/chicken-meal-prep</div><div class="url-meta">RecipeBloom · $39.40 est.</div></div><div class="url-value">1.9k</div><div class="url-bar-wrap"><div class="url-bar-bg"><div class="url-bar-fill" style="width:45%"></div></div></div></div>
+          <div class="url-row"><div class="url-rank">5</div><div class="url-info"><div class="url-path">/bathroom-tile-ideas</div><div class="url-meta">HomeCraft · $28.70 est.</div></div><div class="url-value">1.4k</div><div class="url-bar-wrap"><div class="url-bar-bg"><div class="url-bar-fill" style="width:33%"></div></div></div></div>
+        </div>
+        <button class="btn btn-secondary" style="margin-top:12px;" onclick="openSection('analytics')">View all URLs →</button>
+      </div>
+    </div>
+
+    <!-- ===== ANALYTICS ===== -->
+    <div class="section" id="sec-analytics">
+      <div style="padding:12px 4px 0"><div class="section-title">Analytics</div><div class="section-sub">GA4 + Search Console · 3 sites</div></div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchTab(this,'analytics','an-overview')">Overview</div>
+        <div class="tab" onclick="switchTab(this,'analytics','an-urls')">URLs</div>
+        <div class="tab" onclick="switchTab(this,'analytics','an-affiliate')">Affiliate</div>
+      </div>
+      <div id="an-overview">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📈 Traffic Trend</span><span class="card-badge badge-green">+12.4%</span></div>
+          <div class="imp-chart">
+            <div class="imp-bar" style="height:40%;background:var(--accent);opacity:0.5;"></div><div class="imp-bar" style="height:55%;background:var(--accent);opacity:0.6;"></div><div class="imp-bar" style="height:48%;background:var(--accent);opacity:0.6;"></div><div class="imp-bar" style="height:70%;background:var(--accent);opacity:0.7;"></div><div class="imp-bar" style="height:62%;background:var(--accent);opacity:0.8;"></div><div class="imp-bar" style="height:85%;background:var(--accent);opacity:0.9;"></div><div class="imp-bar" style="height:100%;background:var(--accent);"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:var(--font-mono);"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Bounce Rate</div><div class="stat-value" style="font-size:18px">48.2%</div><div class="stat-delta delta-down">↓ 2.1% (better)</div></div>
+          <div class="stat-card"><div class="stat-label">New Users</div><div class="stat-value" style="font-size:18px">18.4k</div><div class="stat-delta delta-up">↑ 14.2%</div></div>
+          <div class="stat-card"><div class="stat-label">GSC Clicks</div><div class="stat-value" style="font-size:18px">22.1k</div><div class="stat-delta delta-up">↑ 7.8%</div></div>
+          <div class="stat-card"><div class="stat-label">Avg Position</div><div class="stat-value" style="font-size:18px">14.3</div><div class="stat-delta delta-up">↑ 1.2 pos</div></div>
+        </div>
+      </div>
+      <div id="an-urls" style="display:none">
+        <div class="input-group"><input class="input-field" placeholder="🔍 Search URLs..."></div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">All URLs</span><span class="card-badge badge-purple">284 total</span></div>
+          <div class="url-row"><div class="url-rank">1</div><div class="url-info"><div class="url-path">/best-pasta-recipes</div><div class="url-meta">4.2k views · $84 · 5:12 dwell</div></div><div class="url-value" style="color:var(--green)">$84</div><div class="url-bar-wrap"><div class="url-bar-bg"><div class="url-bar-fill" style="width:100%;background:var(--green)"></div></div></div></div>
+          <div class="url-row"><div class="url-rank">2</div><div class="url-info"><div class="url-path">/kitchen-renovation-guide</div><div class="url-meta">3.0k views · $61 · 6:44 dwell</div></div><div class="url-value" style="color:var(--accent)">$61</div><div class="url-bar-wrap"><div class="url-bar-bg"><div class="url-bar-fill" style="width:72%;background:var(--accent)"></div></div></div></div>
+          <div class="url-row"><div class="url-rank">3</div><div class="url-info"><div class="url-path">/europe-budget-travel</div><div class="url-meta">2.4k views · $49 · 4:20 dwell</div></div><div class="url-value" style="color:var(--accent2)">$49</div><div class="url-bar-wrap"><div class="url-bar-bg"><div class="url-bar-fill" style="width:58%;background:var(--accent2)"></div></div></div></div>
+        </div>
+      </div>
+      <div id="an-affiliate" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🔗 Affiliate Clicks</span><span class="card-badge badge-yellow">1,204 today</span></div>
+          <div class="aff-row"><div class="aff-dot" style="background:var(--green)"></div><div class="aff-info"><div class="aff-name">Amazon Associates</div><div class="aff-url">/best-pasta-recipes, /chicken-meal-prep</div></div><div class="aff-clicks" style="color:var(--green)">487</div></div>
+          <div class="aff-row"><div class="aff-dot" style="background:var(--accent)"></div><div class="aff-info"><div class="aff-name">Home Depot Affiliate</div><div class="aff-url">/kitchen-renovation, /bathroom-tile</div></div><div class="aff-clicks" style="color:var(--accent)">312</div></div>
+          <div class="aff-row"><div class="aff-dot" style="background:var(--accent2)"></div><div class="aff-info"><div class="aff-name">Booking.com</div><div class="aff-url">/europe-budget-travel, /hotels-italy</div></div><div class="aff-clicks" style="color:var(--accent2)">284</div></div>
+          <div class="aff-row"><div class="aff-dot" style="background:var(--yellow)"></div><div class="aff-info"><div class="aff-name">ShareASale</div><div class="aff-url">Multiple URLs</div></div><div class="aff-clicks" style="color:var(--yellow)">121</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Track New Affiliate Link</span></div>
+          <div class="input-group"><div class="input-label">Affiliate Name</div><input class="input-field" placeholder="e.g. Amazon Associates"></div>
+          <div class="input-group"><div class="input-label">Link Pattern</div><input class="input-field" placeholder="e.g. amzn.to or amazon.com/dp"></div>
+          <button class="btn btn-primary">+ Track This Link</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SEO ===== -->
+    <div class="section" id="sec-seo">
+      <div style="padding:12px 4px 0"><div class="section-title">SEO</div><div class="section-sub">Lightweight · replaces Yoast / Rank Math</div></div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchTab(this,'seo','seo-checker')">Page Checker</div>
+        <div class="tab" onclick="switchTab(this,'seo','seo-links')">Int. Links</div>
+        <div class="tab" onclick="switchTab(this,'seo','seo-kw')">Keywords</div>
+      </div>
+      <div id="seo-checker">
+        <div class="card">
+          <div class="input-group"><div class="input-label">URL to check</div><input class="input-field" id="seo-url" placeholder="https://yoursite.com/page..."></div>
+          <div class="input-group"><div class="input-label">Focus Keyword</div><input class="input-field" id="seo-kw-inp" placeholder="e.g. easy pasta recipes"></div>
+          <button class="btn btn-primary" onclick="runSEOCheck()">🔍 Analyse Page</button>
+        </div>
+        <div class="card" id="seo-results" style="display:none">
+          <div class="card-header"><span class="card-title">SEO Score</span><span class="card-badge badge-green">Good</span></div>
+          <div style="display:flex;gap:14px;align-items:center;">
+            <div class="seo-score-ring"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="var(--surface2)" stroke-width="8"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--green)" stroke-width="8" stroke-dasharray="201" stroke-dashoffset="40" stroke-linecap="round"/></svg><div class="seo-score-text"><span class="seo-score-num" style="color:var(--green)">80</span><span class="seo-score-label">/ 100</span></div></div>
+            <div class="seo-checks"><div class="seo-check"><span>✅</span><span>Keyword in title</span></div><div class="seo-check"><span>✅</span><span>Meta description present</span></div><div class="seo-check"><span>✅</span><span>Keyword in first 100 words</span></div><div class="seo-check"><span>⚠️</span><span>3 images missing alt text</span></div><div class="seo-check"><span>❌</span><span>No internal links found</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div id="seo-links" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🧠 AI Internal Linking</span><span class="card-badge badge-purple">Self-learning</span></div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px;">Tracks every internal link click. Links that increase dwell time get promoted. Reweights every 7 days automatically.</div>
+          <div style="display:flex;gap:10px;margin-bottom:14px;">
+            <div class="stat-card" style="flex:1;margin:0"><div class="stat-label">Links Tracked</div><div class="stat-value" style="font-size:20px">8,241</div></div>
+            <div class="stat-card" style="flex:1;margin:0"><div class="stat-label">Last Retrain</div><div class="stat-value" style="font-size:16px">3d ago</div></div>
+          </div>
+          <div class="link-row"><div class="link-strength" style="background:rgba(0,212,170,0.15);color:var(--green)">98</div><div class="link-info"><div class="link-path">/pasta → /italian-sauces</div><div class="link-clicks">2,341 clicks · +1:12 dwell boost</div></div><span>🔥</span></div>
+          <div class="link-row"><div class="link-strength" style="background:rgba(0,212,170,0.15);color:var(--green)">91</div><div class="link-info"><div class="link-path">/kitchen-reno → /tile-ideas</div><div class="link-clicks">1,820 clicks · +0:58 dwell boost</div></div><span>📈</span></div>
+          <div class="link-row"><div class="link-strength" style="background:rgba(255,179,71,0.15);color:var(--yellow)">67</div><div class="link-info"><div class="link-path">/europe-travel → /packing-list</div><div class="link-clicks">944 clicks · +0:22 dwell boost</div></div><span>📊</span></div>
+          <div class="link-row"><div class="link-strength" style="background:rgba(255,107,107,0.15);color:var(--red)">31</div><div class="link-info"><div class="link-path">/chicken-prep → /meal-plan</div><div class="link-clicks">213 clicks · -0:08 dwell</div></div><span>⬇️</span></div>
+          <button class="btn btn-primary" style="margin-top:12px" onclick="retrain(event)">🔄 Force Retrain Now</button>
+        </div>
+      </div>
+      <div id="seo-kw" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🎯 Keyword Tracker</span><span class="card-badge badge-purple">GSC Data</span></div>
+          <div class="url-row"><div class="url-info"><div class="url-path">easy pasta recipes</div><div class="url-meta">Pos: 4.2 · 2,841 clicks</div></div><div class="url-value" style="color:var(--green)">↑1.3</div></div>
+          <div class="url-row"><div class="url-info"><div class="url-path">kitchen renovation cost</div><div class="url-meta">Pos: 11.7 · 1,204 clicks</div></div><div class="url-value" style="color:var(--yellow)">→0</div></div>
+          <div class="url-row"><div class="url-info"><div class="url-path">budget europe travel tips</div><div class="url-meta">Pos: 7.1 · 984 clicks</div></div><div class="url-value" style="color:var(--green)">↑2.1</div></div>
+          <div class="url-row"><div class="url-info"><div class="url-path">chicken meal prep ideas</div><div class="url-meta">Pos: 18.4 · 441 clicks</div></div><div class="url-value" style="color:var(--red)">↓0.8</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EMAIL ===== -->
+    <div class="section" id="sec-email">
+      <div style="padding:12px 4px 0"><div class="section-title">Email</div><div class="section-sub">Kit integration · newsletter hub</div></div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchTab(this,'email','em-generate')">Generate</div>
+        <div class="tab" onclick="switchTab(this,'email','em-history')">History</div>
+        <div class="tab" onclick="switchTab(this,'email','em-stats')">Stats</div>
+      </div>
+      <div id="em-generate">
+        <div class="card" style="background:linear-gradient(135deg,rgba(124,106,255,0.12),rgba(0,212,170,0.08));border-color:rgba(124,106,255,0.2)">
+          <div class="card-header"><span class="card-title">✨ AI Newsletter Generator</span></div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">Remembers all past emails — automatically picks up where the last one left off. No duplicate articles.</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <div class="stat-card" style="flex:1;margin:0"><div class="stat-label">Last Sent</div><div class="stat-value" style="font-size:14px">Apr 15</div></div>
+            <div class="stat-card" style="flex:1;margin:0"><div class="stat-label">Articles Used</div><div class="stat-value" style="font-size:14px">143</div></div>
+            <div class="stat-card" style="flex:1;margin:0"><div class="stat-label">Subscribers</div><div class="stat-value" style="font-size:14px">12.4k</div></div>
+          </div>
+          <div class="input-group"><div class="input-label">Select Site</div><select class="input-field"><option>RecipeBloom</option><option>HomeCraft</option><option>WanderGuide</option></select></div>
+          <div class="input-group"><div class="input-label">Tone</div><select class="input-field"><option>Friendly & conversational</option><option>Professional & informative</option><option>Fun & energetic</option></select></div>
+          <div class="input-group"><div class="input-label">Number of Articles</div><select class="input-field"><option>3 articles</option><option>5 articles</option><option>8 articles</option></select></div>
+          <button class="btn btn-primary" onclick="generateNewsletter()">⚡ Generate Newsletter</button>
+        </div>
+        <div id="newsletter-out" style="display:none">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Generated Newsletter</span><span class="card-badge badge-green">Ready</span></div>
+            <div class="ai-response" id="newsletter-text"></div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <button class="btn btn-green" style="flex:1" onclick="alert('Connect Kit API key in Settings to enable direct sending.')">📤 Send to Kit</button>
+              <button class="btn btn-secondary" style="flex:1">✏️ Edit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="em-history" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Past Newsletters</span></div>
+          <div class="email-row"><div class="email-thumb">🍝</div><div class="email-info"><div class="email-subject">5 Pasta Recipes You'll Make Weekly</div><div class="email-meta">Apr 15 · RecipeBloom · 3 articles</div></div><div class="email-stat"><div class="email-rate" style="color:var(--green)">48.2%</div><div class="email-rate-label">open rate</div></div></div>
+          <div class="email-row"><div class="email-thumb">🏠</div><div class="email-info"><div class="email-subject">Transform Your Kitchen This Spring</div><div class="email-meta">Apr 8 · HomeCraft · 5 articles</div></div><div class="email-stat"><div class="email-rate" style="color:var(--accent)">41.7%</div><div class="email-rate-label">open rate</div></div></div>
+          <div class="email-row"><div class="email-thumb">✈️</div><div class="email-info"><div class="email-subject">Europe on £60/Day: Real Itineraries</div><div class="email-meta">Apr 1 · WanderGuide · 4 articles</div></div><div class="email-stat"><div class="email-rate" style="color:var(--accent2)">39.3%</div><div class="email-rate-label">open rate</div></div></div>
+        </div>
+      </div>
+      <div id="em-stats" style="display:none">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Avg Open Rate</div><div class="stat-value" style="font-size:20px">43.1%</div><div class="stat-delta delta-up">↑ 2.4%</div></div>
+          <div class="stat-card"><div class="stat-label">Click Rate</div><div class="stat-value" style="font-size:20px">8.7%</div><div class="stat-delta delta-up">↑ 0.9%</div></div>
+          <div class="stat-card"><div class="stat-label">Kit Revenue</div><div class="stat-value" style="font-size:20px">$241</div><div class="stat-delta delta-up">this month</div></div>
+          <div class="stat-card"><div class="stat-label">New Signups</div><div class="stat-value" style="font-size:20px">184</div><div class="stat-delta delta-up">this week</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CONTENT CREATOR ===== -->
+    <div class="section" id="sec-content">
+      <div style="padding:12px 4px 0"><div class="section-title">Content Creator</div><div class="section-sub">Powered by Claude AI</div></div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchTab(this,'content','ct-write')">Write</div>
+        <div class="tab" onclick="switchTab(this,'content','ct-outline')">Outline</div>
+        <div class="tab" onclick="switchTab(this,'content','ct-meta')">Meta/SEO</div>
+      </div>
+      <div id="ct-write">
+        <div class="card">
+          <div class="input-group"><div class="input-label">Content Type</div><select class="input-field" id="ct-type"><option>Full Blog Post</option><option>Intro Paragraph</option><option>Conclusion</option><option>Product Review</option><option>Listicle</option></select></div>
+          <div class="input-group"><div class="input-label">Topic / Keyword</div><input class="input-field" id="ct-topic" placeholder="e.g. best air fryer recipes for beginners"></div>
+          <div class="input-group"><div class="input-label">Site Voice</div><select class="input-field" id="ct-voice"><option>RecipeBloom — warm, practical, encouraging</option><option>HomeCraft — detailed, trusted, DIY-friendly</option><option>WanderGuide — adventurous, budget-savvy, personal</option></select></div>
+          <div class="input-group"><div class="input-label">Extra instructions (optional)</div><textarea class="input-field" id="ct-extra" placeholder="Include keywords... target audience... avoid..."></textarea></div>
+          <button class="btn btn-primary" onclick="generateContent()">✨ Generate with Claude</button>
+        </div>
+        <div id="ct-out" style="display:none">
+          <div class="card"><div class="card-header"><span class="card-title">Generated Content</span><span class="card-badge badge-purple">Claude</span></div><div class="ai-response" id="ct-result"></div><div style="display:flex;gap:8px;margin-top:12px;"><button class="btn btn-secondary btn-sm" onclick="copyEl('ct-result')">📋 Copy</button><button class="btn btn-secondary btn-sm" onclick="generateContent()">🔄 Retry</button></div></div>
+        </div>
+      </div>
+      <div id="ct-outline" style="display:none">
+        <div class="card">
+          <div class="input-group"><div class="input-label">Article Topic</div><input class="input-field" id="ol-topic" placeholder="e.g. 10 ways to renovate a small kitchen"></div>
+          <div class="input-group"><div class="input-label">Target Word Count</div><select class="input-field"><option>1,000 words</option><option>1,500 words</option><option>2,500 words</option><option>4,000+ words</option></select></div>
+          <button class="btn btn-primary" onclick="generateOutline()">📋 Generate Outline</button>
+        </div>
+        <div id="ol-out" style="display:none"><div class="card"><div class="card-header"><span class="card-title">Article Outline</span></div><div class="ai-response" id="ol-result"></div></div></div>
+      </div>
+      <div id="ct-meta" style="display:none">
+        <div class="card">
+          <div class="input-group"><div class="input-label">Article Title or URL</div><input class="input-field" id="meta-topic" placeholder="Paste title or URL"></div>
+          <div class="input-group"><div class="input-label">Focus Keyword</div><input class="input-field" id="meta-kw" placeholder="e.g. easy air fryer chicken"></div>
+          <button class="btn btn-primary" onclick="generateMeta()">🏷️ Generate Meta Tags</button>
+        </div>
+        <div id="meta-out" style="display:none"><div class="card"><div class="card-header"><span class="card-title">Meta Tags</span></div><div class="ai-response" id="meta-result"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ===== WIDGETS ===== -->
+    <div class="section" id="sec-quiz">
+      <div style="padding:12px 4px 0"><div class="section-title">Widget Builder</div><div class="section-sub">Build, deploy & track — AI-powered</div></div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchTab(this,'quiz','qz-build')">Build</div>
+        <div class="tab" onclick="switchTab(this,'quiz','qz-track')">Track</div>
+      </div>
+      <div id="qz-build">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Widget Type</span></div>
+          <div class="widget-type-grid">
+            <div class="widget-type selected" onclick="selectWidget(this)"><div class="widget-type-icon">🧠</div><div class="widget-type-label">Quiz</div></div>
+            <div class="widget-type" onclick="selectWidget(this)"><div class="widget-type-icon">🧮</div><div class="widget-type-label">Calculator</div></div>
+            <div class="widget-type" onclick="selectWidget(this)"><div class="widget-type-icon">📊</div><div class="widget-type-label">Poll</div></div>
+            <div class="widget-type" onclick="selectWidget(this)"><div class="widget-type-icon">✅</div><div class="widget-type-label">Checklist</div></div>
+            <div class="widget-type" onclick="selectWidget(this)"><div class="widget-type-icon">⏱️</div><div class="widget-type-label">Timer</div></div>
+            <div class="widget-type" onclick="selectWidget(this)"><div class="widget-type-icon">📝</div><div class="widget-type-label">Form</div></div>
+          </div>
+          <div class="input-group"><div class="input-label">Widget Title</div><input class="input-field" id="wg-title" placeholder="e.g. What's Your Cooking Style?"></div>
+          <div class="input-group"><div class="input-label">Describe what you want (AI builds it)</div><textarea class="input-field" id="wg-desc" placeholder="e.g. A 5-question quiz that reveals the user's cooking personality. Show result at end with a CTA to join my email list."></textarea></div>
+          <div class="input-group"><div class="input-label">Deploy to Site</div><select class="input-field"><option>RecipeBloom</option><option>HomeCraft</option><option>WanderGuide</option></select></div>
+          <button class="btn btn-primary" onclick="buildWidget()">⚡ Build with AI</button>
+        </div>
+        <div id="wg-out" style="display:none">
+          <div class="card"><div class="card-header"><span class="card-title">Widget Code</span><span class="card-badge badge-green">Ready</span></div><div class="ai-response" id="wg-result" style="font-family:var(--font-mono);font-size:11px;"></div><div style="display:flex;gap:8px;margin-top:12px;"><button class="btn btn-green" style="flex:1" onclick="alert('Install the SiteDash WP plugin first (Settings → WordPress Setup) to auto-deploy.')">🚀 Deploy to WP</button><button class="btn btn-secondary" style="flex:1" onclick="copyEl('wg-result')">📋 Copy Code</button></div></div>
+        </div>
+      </div>
+      <div id="qz-track" style="display:none">
+        <div class="quiz-grid">
+          <div class="quiz-card"><div class="quiz-title">🍳 What Type of Cook?</div><div class="quiz-stat-row"><span class="quiz-stat-label">Starts</span><span class="quiz-stat-val">4,218</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Completes</span><span class="quiz-stat-val" style="color:var(--green)">71%</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Email CTR</span><span class="quiz-stat-val" style="color:var(--accent)">22%</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Avg Slides</span><span class="quiz-stat-val">4.1/5</span></div><div class="progress-bar"><div class="progress-fill" style="width:71%"></div></div></div>
+          <div class="quiz-card"><div class="quiz-title">🏠 Kitchen Budget Calc</div><div class="quiz-stat-row"><span class="quiz-stat-label">Starts</span><span class="quiz-stat-val">2,841</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Completes</span><span class="quiz-stat-val" style="color:var(--green)">84%</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Email CTR</span><span class="quiz-stat-val" style="color:var(--accent)">31%</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Avg Steps</span><span class="quiz-stat-val">6.8/8</span></div><div class="progress-bar"><div class="progress-fill" style="width:84%;background:var(--green)"></div></div></div>
+          <div class="quiz-card"><div class="quiz-title">✈️ Europe Trip Planner</div><div class="quiz-stat-row"><span class="quiz-stat-label">Starts</span><span class="quiz-stat-val">1,924</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Completes</span><span class="quiz-stat-val" style="color:var(--yellow)">58%</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Email CTR</span><span class="quiz-stat-val" style="color:var(--accent)">18%</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Avg Slides</span><span class="quiz-stat-val">3.2/6</span></div><div class="progress-bar"><div class="progress-fill" style="width:58%;background:var(--yellow)"></div></div></div>
+          <div class="quiz-card"><div class="quiz-title">🥗 Meal Prep Personality</div><div class="quiz-stat-row"><span class="quiz-stat-label">Starts</span><span class="quiz-stat-val">1,102</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Completes</span><span class="quiz-stat-val" style="color:var(--red)">41%</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Email CTR</span><span class="quiz-stat-val" style="color:var(--accent)">11%</span></div><div class="quiz-stat-row"><span class="quiz-stat-label">Avg Slides</span><span class="quiz-stat-val">2.8/5</span></div><div class="progress-bar"><div class="progress-fill" style="width:41%;background:var(--red)"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS ===== -->
+    <div class="section" id="sec-settings">
+      <div style="padding:12px 4px 0"><div class="section-title">Settings</div><div class="section-sub">API keys · sites · preferences</div></div>
+
+      <div class="settings-section">
+        <div class="settings-header">🔑 API Connections</div>
+        <div class="settings-item" onclick="openApiModal('claude')"><div class="settings-icon">🤖</div><div class="settings-info"><div class="settings-label">Claude API (AI features)</div><div class="settings-value"><div class="api-status"><div class="api-dot" id="dot-claude"></div><span id="status-claude">Not connected</span></div></div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="openApiModal('ga4')"><div class="settings-icon">📊</div><div class="settings-info"><div class="settings-label">Google Analytics 4</div><div class="settings-value"><div class="api-status"><div class="api-dot disconnected" id="dot-ga4"></div><span id="status-ga4">Not connected</span></div></div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="openApiModal('gsc')"><div class="settings-icon">🔍</div><div class="settings-info"><div class="settings-label">Google Search Console</div><div class="settings-value"><div class="api-status"><div class="api-dot disconnected" id="dot-gsc"></div><span id="status-gsc">Not connected</span></div></div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="openApiModal('kit')"><div class="settings-icon">📧</div><div class="settings-info"><div class="settings-label">Kit (ConvertKit)</div><div class="settings-value"><div class="api-status"><div class="api-dot disconnected" id="dot-kit"></div><span id="status-kit">Not connected</span></div></div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="openApiModal('mediavine')"><div class="settings-icon">💵</div><div class="settings-info"><div class="settings-label">Mediavine (formula-based)</div><div class="settings-value"><div class="api-status"><div class="api-dot disconnected"></div>Uses RPM formula below</div></div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item" onclick="openApiModal('raptive')"><div class="settings-icon">💰</div><div class="settings-info"><div class="settings-label">Raptive (formula-based)</div><div class="settings-value"><div class="api-status"><div class="api-dot disconnected"></div>Uses CPM formula below</div></div></div><div class="settings-arrow">›</div></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-header">🌐 My Sites</div>
+        <div class="settings-item"><div class="settings-icon">🌿</div><div class="settings-info"><div class="settings-label">RecipeBloom</div><div class="settings-value">recipebloom.com · Mediavine</div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item"><div class="settings-icon">🏡</div><div class="settings-info"><div class="settings-label">HomeCraft</div><div class="settings-value">homecraft.co · Raptive</div></div><div class="settings-arrow">›</div></div>
+        <div class="settings-item"><div class="settings-icon">✈️</div><div class="settings-info"><div class="settings-label">WanderGuide</div><div class="settings-value">wanderguide.net · Mediavine</div></div><div class="settings-arrow">›</div></div>
+        <button class="btn btn-secondary" onclick="openModal('site-modal')">+ Add New Site</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-header">🔌 WordPress Plugin</div>
+        <div class="card">
+          <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px;">Install the <strong>SiteDash Pro</strong> WP plugin on each site to enable affiliate tracking, internal link tracking, quiz events, and widget deployment.</div>
+          <div style="font-family:var(--font-mono);font-size:11px;background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px;color:var(--accent3);line-height:1.8;">1. Download plugin below<br>2. WP Admin → Plugins → Upload Plugin<br>3. Activate & paste your Dashboard Key<br>4. Live within 60 seconds</div>
+          <button class="btn btn-primary">📦 Download WP Plugin (coming soon)</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-header">📖 Revenue Formula</div>
+        <div class="card">
+          <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px;">Calibrate these when you receive actual reports from Mediavine or Raptive.</div>
+          <div class="input-group"><div class="input-label">Mediavine RPM ($)</div><input class="input-field" id="rpm-val" placeholder="e.g. 18.40" value="18.40"></div>
+          <div class="input-group"><div class="input-label">Raptive CPM ($)</div><input class="input-field" id="cpm-val" placeholder="e.g. 4.20" value="4.20"></div>
+          <div class="input-group"><div class="input-label">Average Fill Rate (%)</div><input class="input-field" id="fill-val" placeholder="e.g. 87" value="87"></div>
+          <button class="btn btn-primary" onclick="saveFormula()">💾 Save Formula</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-header">⚙️ Preferences</div>
+        <div class="card">
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">Dark Mode</div><div class="toggle-desc">Toggle light/dark theme</div></div><div class="toggle on" id="theme-toggle" onclick="toggleTheme()"><div class="toggle-knob"></div></div></div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">Live Revenue Updates</div><div class="toggle-desc">Auto-refresh every 60s</div></div><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">Push Notifications</div><div class="toggle-desc">Alert on traffic spikes</div></div><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="openSection('overview')" id="nav-overview"><div class="nav-dot"></div><div class="nav-icon">📊</div><div class="nav-label">Overview</div></div>
+    <div class="nav-item" onclick="openSection('analytics')" id="nav-analytics"><div class="nav-dot"></div><div class="nav-icon">📈</div><div class="nav-label">Analytics</div></div>
+    <div class="nav-item" onclick="openSection('seo')" id="nav-seo"><div class="nav-dot"></div><div class="nav-icon">🔍</div><div class="nav-label">SEO</div></div>
+    <div class="nav-item" onclick="openSection('email')" id="nav-email"><div class="nav-dot"></div><div class="nav-icon">📧</div><div class="nav-label">Email</div></div>
+    <div class="nav-item" onclick="openSection('content')" id="nav-content"><div class="nav-dot"></div><div class="nav-icon">✍️</div><div class="nav-label">Create</div></div>
+    <div class="nav-item" onclick="openSection('quiz')" id="nav-quiz"><div class="nav-dot"></div><div class="nav-icon">🧩</div><div class="nav-label">Widgets</div></div>
+    <div class="nav-item" onclick="openSection('settings')" id="nav-settings"><div class="nav-dot"></div><div class="nav-icon">⚙️</div><div class="nav-label">Settings</div></div>
+  </nav>
+</div>
+
+<!-- API MODAL -->
+<div class="modal-overlay" id="api-modal" onclick="closeModal('api-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="api-modal-title">Connect API</div>
+    <div id="api-modal-body"></div>
+  </div>
+</div>
+
+<!-- SITE MODAL -->
+<div class="modal-overlay" id="site-modal" onclick="closeModal('site-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add New Site</div>
+    <div class="input-group"><div class="input-label">Site Name</div><input class="input-field" placeholder="e.g. My Food Blog"></div>
+    <div class="input-group"><div class="input-label">Domain</div><input class="input-field" placeholder="e.g. myfoodblog.com"></div>
+    <div class="input-group"><div class="input-label">Ad Network</div><select class="input-field"><option>Mediavine</option><option>Raptive</option><option>Both</option><option>Neither</option></select></div>
+    <div class="input-group"><div class="input-label">Emoji Icon</div><input class="input-field" placeholder="e.g. 🍕" maxlength="2"></div>
+    <button class="btn btn-primary" onclick="closeModal('site-modal')">+ Add Site</button>
+  </div>
+</div>
+
+<script>
+  // NAV
+  function openSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+    document.getElementById('content').scrollTop = 0;
+  }
+
+  // TABS — generic: hide all siblings that share same parent section
+  function switchTab(el, ns, targetId) {
+    el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    // Hide all tab panels in this section
+    document.getElementById('sec-' + ns).querySelectorAll('[id]').forEach(p => {
+      if(p.id !== 'sec-' + ns) p.style.display = 'none';
+    });
+    document.getElementById(targetId).style.display = 'block';
+  }
+
+  // THEME
+  let isDark = true;
+  function toggleTheme() {
+    isDark = !isDark;
+    document.body.classList.toggle('light', !isDark);
+    document.getElementById('theme-btn').textContent = isDark ? '🌙' : '☀️';
+    const t = document.getElementById('theme-toggle');
+    if(t) isDark ? t.classList.add('on') : t.classList.remove('on');
+    localStorage.setItem('sd-theme', isDark ? 'dark' : 'light');
+  }
+
+  // SITE / TIME PILLS
+  function selectSite(el) { document.querySelectorAll('.site-pill').forEach(p => p.classList.remove('active')); el.classList.add('active'); }
+  function selectTime(el) { document.querySelectorAll('.time-pill').forEach(p => p.classList.remove('active')); el.classList.add('active'); }
+
+  // LIVE REVENUE TICKER
+  let baseRev = 847.23;
+  function tickRevenue() {
+    baseRev += (Math.random() - 0.35) * 1.8;
+    baseRev = Math.max(600, baseRev);
+    const [d, c] = baseRev.toFixed(2).split('.');
+    const de = document.getElementById('rev-dollars');
+    const ce = document.getElementById('rev-cents');
+    if(de) de.textContent = Number(d).toLocaleString();
+    if(ce) ce.textContent = c;
+  }
+  setInterval(tickRevenue, 7000);
+
+  // CLAUDE API
+  async function callClaude(prompt, resultEl) {
+    const key = localStorage.getItem('sd-claude-key') || '';
+    if(!key) {
+      resultEl.innerHTML = '⚠️ No Claude API key found.<br><br>Go to <strong>Settings → Claude API</strong> to add your key. Get one free at <strong>console.anthropic.com</strong>';
+      return;
+    }
+    resultEl.innerHTML = '<div class="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+      });
+      const data = await res.json();
+      if(data.content?.[0]?.text) {
+        resultEl.innerHTML = data.content[0].text.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+      } else {
+        resultEl.innerHTML = '❌ Error: ' + (data.error?.message || 'Unknown error. Check your API key.');
+      }
+    } catch(e) {
+      resultEl.innerHTML = '❌ Network error. Check your connection and API key.';
+    }
+  }
+
+  // CONTENT
+  async function generateContent() {
+    const type = document.getElementById('ct-type').value;
+    const topic = document.getElementById('ct-topic').value;
+    const voice = document.getElementById('ct-voice').value;
+    const extra = document.getElementById('ct-extra').value;
+    if(!topic) { alert('Please enter a topic or keyword.'); return; }
+    document.getElementById('ct-out').style.display = 'block';
+    const el = document.getElementById('ct-result');
+    el.innerHTML = '<div class="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+    await callClaude(`Write a ${type} about: "${topic}". Voice/tone: ${voice}. ${extra ? 'Extra: ' + extra : ''} Make it SEO-friendly, engaging, UK English.`, el);
+  }
+
+  async function generateOutline() {
+    const topic = document.getElementById('ol-topic').value;
+    if(!topic) { alert('Please enter a topic.'); return; }
+    document.getElementById('ol-out').style.display = 'block';
+    const el = document.getElementById('ol-result');
+    el.innerHTML = '<div class="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+    await callClaude(`Create a detailed SEO-optimised article outline for: "${topic}". Include H2s, H3s, and suggested word counts per section. UK English.`, el);
+  }
+
+  async function generateMeta() {
+    const topic = document.getElementById('meta-topic').value;
+    const kw = document.getElementById('meta-kw').value;
+    if(!topic) { alert('Please enter a title or URL.'); return; }
+    document.getElementById('meta-out').style.display = 'block';
+    const el = document.getElementById('meta-result');
+    el.innerHTML = '<div class="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+    await callClaude(`Generate an SEO meta title (max 60 chars) and meta description (max 155 chars) for: "${topic}". Focus keyword: "${kw}". Make them click-worthy. UK English. Format clearly.`, el);
+  }
+
+  // NEWSLETTER
+  async function generateNewsletter() {
+    document.getElementById('newsletter-out').style.display = 'block';
+    const el = document.getElementById('newsletter-text');
+    el.innerHTML = '<div class="ai-thinking"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+    await callClaude(`Write an email newsletter for a food/recipe blog. Include 3 article teasers with punchy subject lines. The last newsletter went out April 15th — pick up with fresh content from there. End with a CTA to subscribe. UK English. Format with clear sections.`, el);
+  }
+
+  // WIDGET
+  async function buildWidget() {
+    const title = document.getElementById('wg-title').value;
+    const desc = document.getElementById('wg-desc').value;
+    if(!desc) { alert('Please describe the widget.'); return; }
+    document.getElementById('wg-out').style.display = 'block';
+    const el = document.getElementById('wg-result');
+    el.innerHTML = 'Generating widget code...';
+    await callClaude(`Generate a complete self-contained HTML/CSS/JS widget for a WordPress blog. Title: "${title || 'Widget'}". Description: ${desc}. Must be mobile-friendly, copy-paste ready. Include tracking hooks: window.sitedash?.track(event, data). Return only the HTML code.`, el);
+  }
+
+  // SEO
+  function runSEOCheck() {
+    const url = document.getElementById('seo-url').value;
+    const kw = document.getElementById('seo-kw-inp').value;
+    if(!url || !kw) { alert('Please enter both a URL and keyword.'); return; }
+    document.getElementById('seo-results').style.display = 'block';
+  }
+
+  function retrain(e) {
+    const btn = e.target;
+    btn.textContent = '⏳ Retraining...'; btn.disabled = true;
+    setTimeout(() => { btn.textContent = '✅ Retrained!'; setTimeout(() => { btn.textContent = '🔄 Force Retrain Now'; btn.disabled = false; }, 2000); }, 2500);
+  }
+
+  // WIDGET SELECT
+  function selectWidget(el) { document.querySelectorAll('.widget-type').forEach(w => w.classList.remove('selected')); el.classList.add('selected'); }
+
+  // COPY
+  function copyEl(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => alert('Copied!')); }
+
+  // FORMULA SAVE
+  function saveFormula() {
+    localStorage.setItem('sd-rpm', document.getElementById('rpm-val').value);
+    localStorage.setItem('sd-cpm', document.getElementById('cpm-val').value);
+    localStorage.setItem('sd-fill', document.getElementById('fill-val').value);
+    alert('✅ Formula saved!');
+  }
+
+  // MODALS
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  const apiGuides = {
+    claude: { title: 'Connect Claude API', guide: `<div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:14px;">1. Go to <strong>console.anthropic.com</strong><br>2. Sign up / log in<br>3. Go to <strong>API Keys</strong> → Create Key<br>4. Copy and paste below<br><br>⚠️ Free accounts have limited credits. For daily use, a paid plan is recommended.</div>`, key: 'sd-claude-key', dotId: 'dot-claude', statusId: 'status-claude' },
+    ga4: { title: 'Connect Google Analytics 4', guide: `<div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:14px;">1. Go to <strong>console.cloud.google.com</strong><br>2. Create project → Enable <strong>Google Analytics Data API</strong><br>3. Credentials → Create OAuth 2.0 Client ID<br>4. Paste your Measurement ID below</div>`, key: 'sd-ga4-key', dotId: 'dot-ga4', statusId: 'status-ga4' },
+    gsc: { title: 'Connect Search Console', guide: `<div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:14px;">1. Go to <strong>console.cloud.google.com</strong><br>2. Enable <strong>Google Search Console API</strong><br>3. Create a Service Account<br>4. Add service account email to GSC as Owner<br>5. Paste JSON key below</div>`, key: 'sd-gsc-key', dotId: 'dot-gsc', statusId: 'status-gsc' },
+    kit: { title: 'Connect Kit (ConvertKit)', guide: `<div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:14px;">1. Log in to <strong>app.kit.com</strong><br>2. Settings → Developer → API Keys<br>3. Create a new API Key<br>4. Paste it below</div>`, key: 'sd-kit-key', dotId: 'dot-kit', statusId: 'status-kit' },
+    mediavine: { title: 'Mediavine (Formula-Based)', guide: `<div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:14px;">Mediavine doesn't offer a public real-time revenue API. Instead, this dashboard estimates your revenue using:<br><br><strong>Sessions × RPM</strong><br><br>Set your RPM in <strong>Settings → Revenue Formula</strong>. Update it each time you receive a Mediavine report.</div>`, noKey: true },
+    raptive: { title: 'Raptive (Formula-Based)', guide: `<div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:14px;">Raptive doesn't expose a real-time revenue API publicly. The dashboard estimates revenue using:<br><br><strong>Impressions × CPM ÷ 1000 × Fill Rate</strong><br><br>Set your CPM in <strong>Settings → Revenue Formula</strong>. Update it after each Raptive report.</div>`, noKey: true }
+  };
+
+  function openApiModal(service) {
+    const cfg = apiGuides[service];
+    document.getElementById('api-modal-title').textContent = cfg.title;
+    let html = cfg.guide;
+    if(!cfg.noKey) {
+      const saved = localStorage.getItem(cfg.key) || '';
+      html += `<div class="input-group"><div class="input-label">API Key</div><input class="input-field" id="api-inp" type="password" placeholder="Paste your key here..." value="${saved}"></div>`;
+      html += `<button class="btn btn-primary" onclick="saveApiKey('${service}')">💾 Save & Connect</button>`;
+    } else {
+      html += `<button class="btn btn-primary" onclick="closeModal('api-modal')">Got it</button>`;
+    }
+    document.getElementById('api-modal-body').innerHTML = html;
+    openModal('api-modal');
+  }
+
+  function saveApiKey(service) {
+    const val = document.getElementById('api-inp').value.trim();
+    if(!val) { alert('Please paste your API key.'); return; }
+    const cfg = apiGuides[service];
+    localStorage.setItem(cfg.key, val);
+    // Update dot
+    if(cfg.dotId) { const d = document.getElementById(cfg.dotId); if(d) { d.classList.remove('disconnected'); d.classList.add('connected'); } }
+    if(cfg.statusId) { const s = document.getElementById(cfg.statusId); if(s) s.textContent = 'Connected ✓'; }
+    closeModal('api-modal');
+    setTimeout(() => alert('✅ Key saved! AI features are now active.'), 100);
+  }
+
+  // INIT
+  window.addEventListener('load', () => {
+    const saved = localStorage.getItem('sd-theme');
+    if(saved === 'light') { isDark = false; document.body.classList.add('light'); document.getElementById('theme-btn').textContent = '☀️'; }
+    // Restore connected states
+    ['claude','ga4','gsc','kit'].forEach(s => {
+      const cfg = apiGuides[s];
+      if(localStorage.getItem(cfg.key)) {
+        const d = document.getElementById(cfg.dotId); if(d) { d.classList.remove('disconnected'); d.classList.add('connected'); }
+        const st = document.getElementById(cfg.statusId); if(st) st.textContent = 'Connected ✓';
+      } else {
+        const d = document.getElementById(cfg.dotId); if(d) d.classList.add('disconnected');
+      }
+    });
+    // Load saved formula
+    if(localStorage.getItem('sd-rpm')) document.getElementById('rpm-val').value = localStorage.getItem('sd-rpm');
+    if(localStorage.getItem('sd-cpm')) document.getElementById('cpm-val').value = localStorage.getItem('sd-cpm');
+    if(localStorage.getItem('sd-fill')) document.getElementById('fill-val').value = localStorage.getItem('sd-fill');
+  });
+</script>
+</body>
+</html>
